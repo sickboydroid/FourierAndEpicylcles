@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fourier Transform</title>
+    <link rel="stylesheet" href="./src/css/style.css" />
+    <script type="module" src="./src/main.ts"></script>
+  </head>
+  <body>
+    <div class="drawing view glass">
+      <div class="container">
+        <canvas id="drawing-canvas"></canvas>
+        <div class="controls-container">
+          <div class="controls">
+            <div class="add"><button class="selected">Add</button></div>
+            <div class="delete"><button>Delete</button></div>
+            <div class="save"><button>Save</button></div>
+            <div class="close"><button>Close</button></div>
+          </div>
+        </div>
+        <dialog id="save-dialog" class="modal">
+          <form method="dialog" class="modal-content">
+            <h2>Save Drawing</h2>
+            <div class="field">
+              <label for="drawing-name">Name</label>
+              <input
+                id="drawing-name"
+                type="text"
+                placeholder="Enter drawing name..."
+                autocomplete="off"
+              />
+            </div>
+            <div class="actions">
+              <button type="button" value="cancel" class="btn ghost">
+                Cancel
+              </button>
+              <button type="button" value="save" class="btn primary">
+                Save
+              </button>
+            </div>
+          </form>
+        </dialog>
+      </div>
+    </div>
+    <div class="select-drawing view glass">
+      <div class="container">
+        <div class="items"></div>
+      </div>
+      <div class="controls">
+        <button class="close">Close</button>
+      </div>
+    </div>
+    <div class="simulate view">
+      <canvas id="layer1"></canvas>
+      <ul class="controls">
+        <li>
+          <label for="progress" id="progress-label">50%</label>
+          <input
+            type="range"
+            name="progress"
+            id="progress"
+            min="0"
+            max="1"
+            step="0.001"
+            value="0.5"
+          />
+        </li>
+        <li>
+          <label for="vector-count">Vector Count:</label>
+          <input type="text" name="vector-count" id="vector-count" value="50" />
+        </li>
+        <li>
+          <button id="load-new-path">Load New</button>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
