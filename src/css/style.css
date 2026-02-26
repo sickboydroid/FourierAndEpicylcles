@@ -561,3 +561,7 @@ input[type="range"] {
     border-color: var(--btn-success-hover);
   }
 }
+
+#music-toggle {
+  width: 100px; /* prevents layout changes when text changes from mute <=> unmute */
+}
