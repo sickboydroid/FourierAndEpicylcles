@@ -1,11 +1,12 @@
 import type Vector from "./vector";
+import { color as stateColor } from "./state";
 
 export class Point {
   selected = false;
   pos: Vector;
   is_constrol_point = false;
-  color = "#0096FF";
-  selected_color = "white";
+  color = stateColor.BEZIER_POINT_COLOR;
+  selected_color = stateColor.BEZIER_SELECTED_POINT_COLOR;
   radius = 5;
   selected_radius = 2 * this.radius;
   constructor(pos: Vector) {

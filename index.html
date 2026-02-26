@@ -8,20 +8,23 @@
     <script type="module" src="./src/main.ts"></script>
   </head>
   <body>
-    <div class="drawing view glass">
+    <div class="view drawing">
       <div class="container">
         <canvas id="drawing-canvas"></canvas>
-        <div class="controls-container">
-          <div class="controls">
-            <div class="add"><button class="selected">Add</button></div>
-            <div class="delete"><button>Delete</button></div>
-            <div class="save"><button>Save</button></div>
-            <div class="close"><button>Close</button></div>
-          </div>
+
+        <div class="floating-controls glass-panel">
+          <button id="add" class="btn selected">Add Point</button>
+          <button id="delete" class="btn">Delete Point</button>
+          <button id="save" class="btn">Save</button>
+          <button id="close" class="btn">Close</button>
         </div>
+
         <dialog id="save-dialog" class="modal">
-          <form method="dialog" class="modal-content">
+          <form method="dialog" class="modal-content glass-panel">
             <h2>Save Drawing</h2>
+            <div class="field">
+              <p>Note: The curve will be closed automatically</p>
+            </div>
             <div class="field">
               <label for="drawing-name">Name</label>
               <input
@@ -35,7 +38,7 @@
               <button type="button" value="cancel" class="btn ghost">
                 Cancel
               </button>
-              <button type="button" value="save" class="btn primary">
+              <button type="submit" value="save" class="btn primary">
                 Save
               </button>
             </div>
@@ -43,19 +46,22 @@
         </dialog>
       </div>
     </div>
-    <div class="select-drawing view glass">
+
+    <div class="view select-drawing glass-overlay">
       <div class="container">
         <div class="items"></div>
       </div>
-      <div class="controls">
-        <button class="close">Close</button>
+      <div class="floating-controls bottom-right glass-panel">
+        <button class="btn close">Close</button>
       </div>
     </div>
-    <div class="simulate view">
-      <canvas id="layer1"></canvas>
-      <ul class="controls">
-        <li>
-          <label for="progress" id="progress-label">50%</label>
+
+    <div class="view simulate">
+      <canvas id="simulate-canvas"></canvas>
+
+      <div class="simulate-controls glass-panel">
+        <div class="timeline-row">
+          <label for="progress" id="progress-label">50.0%</label>
           <input
             type="range"
             name="progress"
@@ -65,15 +71,58 @@
             step="0.001"
             value="0.5"
           />
-        </li>
-        <li>
-          <label for="vector-count">Vector Count:</label>
-          <input type="text" name="vector-count" id="vector-count" value="50" />
-        </li>
-        <li>
-          <button id="load-new-path">Load New</button>
-        </li>
-      </ul>
+        </div>
+
+        <div class="actions-row">
+          <div class="action-buttons">
+            <button id="play-toggle" class="btn primary">Pause</button>
+            <button id="load-new-path" class="btn primary">Load New</button>
+          </div>
+
+          <div class="settings-inline">
+            <div class="setting-item">
+              <label for="vector-count">Vector Count:</label>
+              <input
+                type="number"
+                name="vector-count"
+                id="vector-count"
+                value="100"
+                min="1"
+              />
+            </div>
+
+            <div class="toggles-inline">
+              <label class="toggle-pill" for="show-circles">
+                <input type="checkbox" name="show-circles" id="show-circles" />
+                <span class="label-text">Circles</span>
+                <div class="slider"></div>
+              </label>
+
+              <label class="toggle-pill" for="show-vectors">
+                <input
+                  type="checkbox"
+                  name="show-vectors"
+                  id="show-vectors"
+                  checked
+                />
+                <span class="label-text">Vectors</span>
+                <div class="slider"></div>
+              </label>
+
+              <label class="toggle-pill" for="show-function">
+                <input
+                  type="checkbox"
+                  name="show-function"
+                  id="show-function"
+                  checked
+                />
+                <span class="label-text">Function</span>
+                <div class="slider"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>

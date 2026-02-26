@@ -1,29 +1,8 @@
 import type Complex from "./complex";
-import { ctx } from "./simulate";
 import Vector from "./vector";
 
 export function randomBrightColor(): string {
   return `hsl(${Math.random() * 360}, ${80}%, ${70}%)`;
-}
-
-export function drawVector(v: Vector) {
-  const ox = 500;
-  const oy = 500;
-
-  v = v.normalize().scale(100);
-  const ex = ox + v.x;
-  const ey = oy - v.y;
-
-  ctx.strokeStyle = "hsl(200, 60%, 60%)";
-  ctx.fillStyle = "hsl(100, 60%, 60%)";
-  ctx.beginPath();
-  ctx.moveTo(ox, oy);
-  ctx.lineTo(ex, ey);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(ex, ey, 4, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 export function lowerBound(arr: number[], tar: number): number {

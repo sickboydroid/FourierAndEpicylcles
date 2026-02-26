@@ -23,10 +23,11 @@ export default class ComplexFunction {
     if (this.output.length == 0) return;
     if (!this.output[0].equals(this.output.at(-1)!)) {
       console.warn(
-        "Function.computePhasors(...): Function is not closed, closing it forcefully",
+        "Function.computePhasors(...): Function is not closed, prefer it closing",
       );
-      this.output[this.output.length - 1] = this.output[0];
+      // this.output[this.output.length - 1] = this.output[0];
     }
+    this.phasors = [];
     for (let i = from; i <= to; i++) {
       const constant = this.integrateWithPhasor(0, 1, new Phasor(1, -i, 0));
       const phasor = new Phasor(constant.amplitude, i, constant.phase);
@@ -62,19 +63,21 @@ export default class ComplexFunction {
 
   static fromBezierCurvePoints(points: [number, number][]): ComplexFunction {
     const func = new ComplexFunction();
-    const wholeCurve: [number, number][] = [];
+    const whole: [number, number][] = [];
     for (let i = 0; true; i++) {
       const curve = this.getBezierCurveAt(i, points);
       if (!curve) break;
-      wholeCurve.push(...this.bezierCurveToPoints(...curve));
+      whole.push(...this.bezierCurveToPoints(...curve));
     }
-    const fact = 1 / wholeCurve.length;
-    for (let i = 0; i < wholeCurve.length; i++) {
+    const n = whole.length;
+    const fact = 1 / (n - 1);
+    for (let i = 0; i < n; i++) {
       func.addMapping(
         i * fact,
-        Complex.fromCartesian(wholeCurve[i][0], wholeCurve[i][1]),
+        Complex.fromCartesian(whole[i][0], whole[i][1]),
       );
     }
+
     return func;
   }
 

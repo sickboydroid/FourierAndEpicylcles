@@ -1,10 +1,12 @@
-import { saveDrawing } from "./drawing-utils";
+import { getSavedDrawings, saveDrawing, toSimplePoints } from "./drawing-utils";
+import ComplexFunction from "./function";
 import { viewManager } from "./main";
 import { Point } from "./point";
-import { drawingState as state } from "./state";
+import { color, simulateState, drawingState as state } from "./state";
 import Vector from "./vector";
 
-export let canvas = document.querySelector(
+const root = document.querySelector("div.view.drawing") as HTMLDivElement;
+export const canvas = root.querySelector(
   "#drawing-canvas",
 ) as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
@@ -12,6 +14,7 @@ export const WORLD_WIDTH = window.innerWidth;
 export const WORLD_HEIGHT = window.innerHeight;
 const translateX = WORLD_WIDTH / 2;
 const translateY = WORLD_HEIGHT / 2;
+const pointDistThreshold = 20;
 type MODE_ADD = "add";
 type MODE_REMOVE = "delete";
 let mode: MODE_ADD | MODE_REMOVE = "add";
@@ -34,19 +37,19 @@ function initCanvas() {
 }
 
 function initInputHandlers() {
+  if (state.hasInitializedHanlers) return;
+  state.hasInitializedHanlers = true;
   initInputHandlersForPoints();
   initInputHanldersForButtons();
 }
 
 function initInputHanldersForButtons() {
-  const btnAdd = document.querySelector(".add button") as HTMLButtonElement;
-  const btnDelete = document.querySelector(
-    ".delete button",
-  ) as HTMLButtonElement;
-  const btnSave = document.querySelector(".save button") as HTMLButtonElement;
-  const btnClose = document.querySelector(".close button") as HTMLButtonElement;
-  const dialogSave = document.querySelector(
-    "#save-dialog",
+  const btnAdd = root.querySelector("button#add") as HTMLButtonElement;
+  const btnDelete = root.querySelector("button#delete") as HTMLButtonElement;
+  const btnSave = root.querySelector("button#save") as HTMLButtonElement;
+  const btnClose = root.querySelector("button#close") as HTMLButtonElement;
+  const dialogSave = root.querySelector(
+    "dialog#save-dialog",
   ) as HTMLDialogElement;
 
   btnAdd.addEventListener("click", (event) => {
@@ -80,9 +83,16 @@ function initInputHanldersForButtons() {
     const input = document.getElementById("drawing-name") as HTMLInputElement;
     const name = input.value;
     if (!name) return;
+    input.value = "";
     saveDrawing(name, state.points);
+    console.log(WORLD_WIDTH, WORLD_HEIGHT);
+    console.log(toSimplePoints(state.points));
+    simulateState.function = ComplexFunction.fromBezierCurvePoints(
+      toSimplePoints(state.points),
+    );
     dialogSave.close();
     viewManager.hideDrawing();
+    viewManager.showSimulate();
   });
 
   dialogBtnCancel.addEventListener("click", () => {
@@ -91,7 +101,8 @@ function initInputHanldersForButtons() {
 }
 
 function initInputHandlersForPoints() {
-  let selectedPoint: Point | null = null;
+  let selectedPoint: number = -1;
+  let selectedClosestPoint: number = -1;
 
   // Handle clicking: Either select an existing point OR add a new one
   canvas.addEventListener("mousedown", (event) => {
@@ -102,23 +113,13 @@ function initInputHandlersForPoints() {
     const clickVec = new Vector(mouseX, mouseY);
 
     // Closest point to click
-    let closestPoint = null;
-    let closestDist = Infinity;
-
-    for (const point of state.points) {
-      const distSqr = point.pos.distSq(clickVec);
-      if (distSqr < closestDist) {
-        closestPoint = point;
-        closestDist = distSqr;
-      }
-    }
-
-    if (closestDist < 20 * 20 && closestPoint) {
+    let closestPointIdx = getClosestPoint(clickVec);
+    if (closestPointIdx != -1) {
       if (mode == "delete") {
-        deletePoint(closestPoint);
+        deletePoint(state.points[closestPointIdx]);
       } else {
-        selectedPoint = closestPoint;
-        selectedPoint.selected = true;
+        selectedPoint = closestPointIdx;
+        state.points[selectedPoint].selected = true;
       }
     } else if (mode == "add") {
       addPoint(clickVec);
@@ -126,27 +127,119 @@ function initInputHandlersForPoints() {
   });
 
   canvas.addEventListener("mousemove", (event) => {
-    if (selectedPoint) {
+    if (selectedPoint != -1) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = event.clientX - rect.left - translateX;
       const mouseY = event.clientY - rect.top - translateY;
-      selectedPoint.pos = new Vector(mouseX, mouseY);
+      const mouseClickVec = new Vector(mouseX, mouseY);
+      movePointTo(selectedPoint, mouseClickVec);
+      const closestPoint = getClosestPoint(mouseClickVec, 10, selectedPoint);
+      if (closestPoint == selectedClosestPoint) return;
+      if (selectedClosestPoint != -1)
+        state.points[selectedClosestPoint].selected = false;
+      if (closestPoint != -1) state.points[closestPoint].selected = true;
+      selectedClosestPoint = closestPoint;
     }
   });
 
   canvas.addEventListener("mouseup", () => {
-    if (selectedPoint) {
-      selectedPoint.selected = false;
-      selectedPoint = null;
+    if (selectedPoint != -1) {
+      state.points[selectedPoint].selected = false;
+      if (selectedClosestPoint != -1) {
+        state.points[selectedClosestPoint].selected = false;
+
+        if (
+          (selectedPoint == 0 &&
+            selectedClosestPoint == state.points.length - 2) ||
+          (selectedPoint == state.points.length - 2 &&
+            selectedClosestPoint == 0)
+        ) {
+          // if joining starting and ending point, align ending control point to starting
+          const startPoint = state.points[selectedClosestPoint];
+          const startCP = state.points[selectedClosestPoint + 1];
+          const endPoint = state.points[selectedPoint];
+          const endCP = state.points[selectedPoint + 1];
+          endCP.pos = endPoint.pos.add(
+            startPoint.pos
+              .subtract(startCP.pos)
+              .normalize()
+              .scale(endCP.pos.subtract(endPoint.pos).magnitude()),
+          );
+        }
+        movePointTo(selectedPoint, state.points[selectedClosestPoint].pos);
+
+        selectedClosestPoint = -1;
+      }
+      selectedPoint = -1;
     }
   });
 
   canvas.addEventListener("mouseleave", () => {
-    if (selectedPoint) {
-      selectedPoint.selected = false;
-      selectedPoint = null;
+    if (selectedPoint != -1) {
+      state.points[selectedPoint].selected = false;
+      selectedPoint = -1;
     }
   });
+}
+
+function movePointTo(pointIdx: number, newPos: Vector) {
+  const oldPos = state.points[pointIdx].pos;
+  const change = newPos.subtract(oldPos);
+  state.points[pointIdx].pos = state.points[pointIdx].pos.add(change);
+  if (state.points[pointIdx].is_constrol_point) {
+    // move other control points
+    let otherControlPoint = null;
+    let mainPoint = null as Point | null;
+    if (
+      pointIdx + 1 < state.points.length &&
+      state.points[pointIdx + 1].is_constrol_point
+    ) {
+      mainPoint = state.points[pointIdx - 1];
+      otherControlPoint = state.points[pointIdx + 1];
+    } else if (
+      pointIdx - 1 >= 0 &&
+      state.points[pointIdx - 1].is_constrol_point
+    ) {
+      mainPoint = state.points[pointIdx - 2];
+      otherControlPoint = state.points[pointIdx - 1];
+    }
+    if (otherControlPoint && mainPoint) {
+      const otherControlPointNewPos = mainPoint.pos
+        .subtract(state.points[pointIdx].pos)
+        .normalize()
+        .scale(otherControlPoint.pos.subtract(mainPoint.pos).magnitude())
+        .add(mainPoint.pos);
+      otherControlPoint.pos = otherControlPointNewPos;
+    }
+  } else {
+    // move both control points
+    if (pointIdx + 1 < state.points.length)
+      state.points[pointIdx + 1].pos =
+        state.points[pointIdx + 1].pos.add(change);
+    if (pointIdx != 0 && pointIdx + 2 < state.points.length)
+      state.points[pointIdx + 2].pos =
+        state.points[pointIdx + 2].pos.add(change);
+  }
+}
+
+function getClosestPoint(
+  to: Vector,
+  threshold = pointDistThreshold,
+  except = -1,
+) {
+  let closestPointIdx = -1;
+  let closestDist = Infinity;
+  for (let i = 0; i < state.points.length; i++) {
+    if (i == except) continue;
+    const distSqr = state.points[i].pos.distSq(to);
+    if (distSqr < closestDist) {
+      closestPointIdx = i;
+      closestDist = distSqr;
+    }
+  }
+
+  if (closestDist < threshold * threshold) return closestPointIdx;
+  return -1;
 }
 
 function deletePoint(point: Point) {
@@ -164,26 +257,32 @@ function deletePoint(point: Point) {
       } else {
         state.points.splice(i, 3);
       }
+      break;
     }
   }
 }
 
-function addPoint(at: Vector) {
+function addPoint(at: Vector, controlPointDist = 60) {
   if (state.points.length > 0) {
     const lastPoint = state.points.at(-1)!;
     let lastControlPointVector = new Vector(
-      lastPoint.pos.x + 20,
-      lastPoint.pos.y,
+      lastPoint.pos.x,
+      lastPoint.pos.y - controlPointDist,
     );
-    if (!lastPoint.is_constrol_point) {
-      lastControlPointVector = new Vector(
-        lastPoint.pos.x,
-        lastPoint.pos.y - 60,
-      );
+
+    if (lastPoint.is_constrol_point) {
+      // this is pn where n > 2
+      const secondLastPoint = state.points.at(-2)!;
+      const dir = secondLastPoint.pos.subtract(lastPoint.pos);
+      lastControlPointVector = lastPoint.pos
+        .add(dir)
+        .add(dir.normalize().scale(controlPointDist));
     }
     const point = new Point(at);
     const controlPointLast = new Point(lastControlPointVector);
-    const controlPointCur = new Point(new Vector(at.x, at.y - 60));
+    const controlPointCur = new Point(
+      new Vector(at.x, at.y + controlPointDist),
+    );
     controlPointLast.is_constrol_point = true;
     controlPointCur.is_constrol_point = true;
     state.points.push(controlPointLast);
@@ -198,7 +297,7 @@ function addPoint(at: Vector) {
 /******************Drawing Logic**********************/
 
 function clearCanvas() {
-  ctx.fillStyle = "rgba(40,40,40,1)";
+  ctx.fillStyle = color.CANVAS_BG_COLOR;
   ctx.fillRect(-translateX, -translateY, WORLD_WIDTH, WORLD_HEIGHT);
 }
 

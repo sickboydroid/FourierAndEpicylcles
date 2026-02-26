@@ -6,7 +6,15 @@ import {
 } from "./drawing-utils";
 import ComplexFunction from "./function";
 import { viewManager } from "./main";
-import { drawingState, simulateState } from "./state";
+import {
+  drawingState,
+  selectDrawingState as state,
+  simulateState,
+} from "./state";
+
+const root = document.querySelector(
+  "div.view.select-drawing",
+) as HTMLDivElement;
 
 export function initView() {
   initInputHandlers();
@@ -14,13 +22,15 @@ export function initView() {
 }
 
 export function destroyView() {
-  const items = document.querySelector(".items") as HTMLDivElement;
+  const items = root.querySelector(".items") as HTMLDivElement;
   items.replaceChildren();
 }
 
 function initInputHandlers() {
-  const btnClose = document.querySelector(
-    ".select-drawing .controls button.close",
+  if (state.hasInitializedHanlers) return;
+  state.hasInitializedHanlers = true;
+  const btnClose = root.querySelector(
+    ".select-drawing .floating-controls button.close",
   ) as HTMLButtonElement;
   btnClose.addEventListener("click", (event) => {
     viewManager.hideSelectDrawing();
@@ -28,7 +38,7 @@ function initInputHandlers() {
 }
 
 function initDrawingItems() {
-  const createItem = addItem(0, "+", "Create", null);
+  const createItem = addItem(0, "+", "Create New", null);
   createItem.addEventListener("click", () => {
     drawingState.points = [];
     viewManager.showDrawing();
@@ -60,14 +70,15 @@ function addItem(
   nameText: string,
   drawing: Drawing | null,
 ) {
-  const items = document.querySelector(".items") as HTMLElement;
+  const items = root.querySelector(".items") as HTMLElement;
 
   const item = document.createElement("div");
   item.className = "item";
+  if (idx == 0) item.classList.add("create");
   item.dataset.idx = idx.toString();
 
   const index = document.createElement("div");
-  index.className = "index";
+  index.classList.add("index");
   index.textContent = indexText;
 
   const name = document.createElement("div");
@@ -91,8 +102,8 @@ function addItem(
     return btn;
   };
 
-  const deleteBtn = makeIconBtn("../public/delete.svg", "delete");
-  const editBtn = makeIconBtn("../public/edit.svg", "edit");
+  const deleteBtn = makeIconBtn("/delete.svg", "delete");
+  const editBtn = makeIconBtn("edit.svg", "edit");
 
   deleteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -106,8 +117,10 @@ function addItem(
     viewManager.showDrawing();
     viewManager.hideSelectDrawing();
   });
-  actions.append(editBtn, deleteBtn);
-  index.appendChild(actions);
+  if (idx != 0) {
+    actions.append(editBtn, deleteBtn);
+    index.appendChild(actions);
+  }
 
   item.append(index, name);
   items.appendChild(item);

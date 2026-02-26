@@ -1,3 +1,4 @@
+import { savePremadeDrawings } from "./drawing-utils";
 import { ViewManager } from "./views";
 
 export const viewManager = new ViewManager();
@@ -9,4 +10,5 @@ btnLoadPath.addEventListener("click", () => {
   viewManager.showSelectDrawing();
 });
 
+savePremadeDrawings();
 viewManager.showSimulate();

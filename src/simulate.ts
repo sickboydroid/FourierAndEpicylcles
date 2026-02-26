@@ -1,26 +1,24 @@
+import { color, precisions, simulateState as state } from "./state";
 import Complex from "./complex";
 import ComplexFunction from "./function";
 import { Phasor } from "./phasor";
-import { precisions, simulateState as state } from "./state";
 import Vector from "./vector";
 
-export let canvas = document.querySelector("#layer1") as HTMLCanvasElement;
-export const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-export const WORLD_WIDTH = window.innerWidth;
-export const WORLD_HEIGHT = window.innerHeight;
+const root = document.querySelector("div.view.simulate") as HTMLDivElement;
+const canvas = root.querySelector("#simulate-canvas") as HTMLCanvasElement;
+const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+export let WORLD_WIDTH = window.innerWidth;
+export let WORLD_HEIGHT = window.innerHeight;
 const MAX_TRACE_POINTS = 10000;
-const progressRange = document.querySelector(
-  ".controls #progress",
-) as HTMLInputElement;
-const progressLabel = document.querySelector(
-  ".controls #progress-label",
-) as HTMLLabelElement;
+const progressRange = root.querySelector("#progress") as HTMLInputElement;
+const progressLabel = root.querySelector("#progress-label") as HTMLLabelElement;
 
 const frameRateInfo = {
   lastUpdateTime: 0,
   frameCountSinceUpdate: 0,
   lastFrameRate: 60,
 };
+
 let func = getDefaultFunction();
 /******************Initializers**********************/
 
@@ -33,7 +31,6 @@ export function initView() {
 
   initCanvas();
   initInputHandlers();
-  initControls();
   initFunction();
 }
 
@@ -43,29 +40,88 @@ export function destroyView() {
 
 export function pauseView() {}
 
-function initCanvas() {
-  canvas.width = WORLD_WIDTH;
-  canvas.height = WORLD_HEIGHT;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  // keep origin at center
-  ctx.translate(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
-  requestAnimationFrame(draw);
-}
-
-function initControls() {
+function initInputHandlers() {
+  if (state.hasInitializedHanlers) return;
+  state.hasInitializedHanlers = true;
+  const btnPlayToggle = root.querySelector("#play-toggle") as HTMLButtonElement;
+  const inputVectorCount = root.querySelector(
+    "#vector-count",
+  ) as HTMLInputElement;
+  const inputShowCircles = root.querySelector(
+    "#show-circles",
+  ) as HTMLInputElement;
+  const inputShowVectors = root.querySelector(
+    "#show-vectors",
+  ) as HTMLInputElement;
+  const inputShowFunction = root.querySelector(
+    "#show-function",
+  ) as HTMLInputElement;
+  inputVectorCount.addEventListener("change", (event) => {
+    let count = Number(inputVectorCount.value);
+    count = Math.min(count, 500);
+    state.vectorCount = count;
+    inputVectorCount.value = count.toString();
+    initFunction();
+  });
+  inputShowFunction.addEventListener("change", (event) => {
+    state.showFunction = inputShowFunction.checked;
+  });
+  btnPlayToggle.addEventListener("click", (event) => {
+    state.isProgressing = !state.isProgressing;
+    if (state.isProgressing) btnPlayToggle.textContent = "Pause";
+    else btnPlayToggle.textContent = "Play";
+  });
   progressRange.addEventListener("input", (event) => {
     progressLabel.textContent =
       (Number(progressRange.value) * 100).toFixed(1) + "%";
+    state.animationProgress = Number(progressRange.value);
+    state.isProgressing = false;
+    btnPlayToggle.textContent = "Play";
+    syncAnimationProgress();
+  });
+  inputShowCircles.addEventListener("change", (event) => {
+    state.showCircles = inputShowCircles.checked;
+  });
+  inputShowVectors.addEventListener("change", (event) => {
+    state.showVectors = inputShowVectors.checked;
   });
 }
 
-function initInputHandlers() {}
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // keep origin at center
+  ctx.translate(width / 2, height / 2);
+
+  WORLD_WIDTH = width;
+  WORLD_HEIGHT = height;
+}
+
+function initCanvas() {
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  requestAnimationFrame(draw);
+}
 
 function initFunction() {
-  func!.computePhasors(-100, 100);
+  const min = Math.floor(state.vectorCount / 2);
+  const max = state.vectorCount - min;
+  func!.computePhasors(-min, max);
 }
 
 function getDefaultFunction() {
+  // state.function = ComplexFunction.fromBezierCurvePoints(heart);
   if (state.function) return state.function;
   console.info("Create empty function as no function is provided");
   const func = new ComplexFunction();
@@ -91,7 +147,7 @@ function updateProgress(progress: number) {
 /******************Drawing Logic**********************/
 
 function clearCanvas() {
-  ctx.fillStyle = "rgba(40,40,40,1)";
+  ctx.fillStyle = color.CANVAS_BG_COLOR;
   ctx.fillRect(-WORLD_WIDTH / 2, -WORLD_HEIGHT / 2, WORLD_WIDTH, WORLD_HEIGHT);
 }
 
@@ -114,17 +170,20 @@ function draw(curTime: number) {
   state.lastTime = curTime;
   drawFunction();
   drawPhasors();
-  state.animationProgress += state.animationSpeed * deltaTime;
-  if (state.animationProgress > 1) {
-    state.animationProgress = 0;
-    state.pointTrace.length = 0;
+  if (state.isProgressing) {
+    state.animationProgress += state.animationSpeed * deltaTime;
+    if (state.animationProgress > 1) {
+      state.animationProgress = 0;
+      state.pointTrace.length = 0;
+    }
   }
   updateProgress(state.animationProgress);
   requestAnimationFrame(draw);
 }
 
 function drawGrid() {
-  ctx.strokeStyle = "gray";
+  ctx.strokeStyle = color.GRID_MAJOR_COLOR;
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, -WORLD_HEIGHT / 2);
   ctx.lineTo(0, WORLD_HEIGHT / 2);
@@ -141,18 +200,20 @@ function drawPhasors() {
   }
 
   // draw writing tip
-  ctx.fillStyle = "red";
-  ctx.beginPath();
-  ctx.arc(res.x, res.y, 4, 0, 2 * Math.PI);
-  ctx.fill();
-  drawPointTrace();
+
   state.pointTrace.push([res.x, res.y]);
-  if (state.pointTrace.length > MAX_TRACE_POINTS) state.pointTrace.shift();
+  drawPointTrace();
+  // ctx.fillStyle = "red";
+  // ctx.beginPath();
+  // ctx.arc(res.x, res.y, 4, 0, 2 * Math.PI);
+  // ctx.fill();
+  // if (state.pointTrace.length > MAX_TRACE_POINTS) state.pointTrace.shift();
 }
 
 function drawPointTrace() {
   if (state.pointTrace.length == 0) return;
-  ctx.strokeStyle = "blue";
+  ctx.strokeStyle = color.POINT_TRACE_COLOR;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(state.pointTrace[0][0], state.pointTrace[0][1]);
   for (let i = 1; i < state.pointTrace.length; i++) {
@@ -162,11 +223,13 @@ function drawPointTrace() {
 }
 
 function drawFunction() {
-  ctx.strokeStyle = "cyan";
+  if (!state.showFunction) return;
+  ctx.strokeStyle = color.FUNCTION_CURVE_COLOR;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let i = 0; i < func!.output.length; i++) {
-    let x = func!.output[i].getReal();
-    let y = func!.output[i].getImag();
+  for (let i = 0; i <= 1; i += precisions.function_drawing_precision) {
+    let x = func.getValueAt(i).getReal();
+    let y = func.getValueAt(i).getImag();
     if (i == 0) ctx.moveTo(x, y);
     ctx.lineTo(x, y);
   }
@@ -174,23 +237,79 @@ function drawFunction() {
 }
 
 function drawPhasor(phasor: Phasor, source: Vector) {
-  // draw the line
-  ctx.strokeStyle = "white";
+  if (state.showVectors) {
+    // draw the line
+    drawVector(
+      source,
+      phasor.getValueAt(state.animationProgress).toVector().add(source),
+    );
+  }
+
+  if (state.showCircles) {
+    // draw the circle
+    ctx.beginPath();
+    for (let i = 0; i <= 1; i += precisions.phasor_circle_precision) {
+      ctx.strokeStyle = color.CIRCLE_COLOR;
+      ctx.lineWidth = 1;
+      const pos = phasor.getValueAt(i).toVector().add(source);
+      let x = pos.x;
+      let y = pos.y;
+      if (i == 0) ctx.moveTo(x, y);
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawVector(from: Vector, to: Vector) {
+  // draw line
+  ctx.strokeStyle = color.VECTOR_COLOR;
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  const pos = phasor.getValueAt(state.animationProgress).toVector().add(source);
-  ctx.moveTo(source.x, source.y);
-  ctx.lineTo(pos.x, pos.y);
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
   ctx.stroke();
 
-  // draw the circle
+  // draw triangular tip
+  const vec = to.subtract(from);
+  const height = 0.1 * vec.magnitude();
+  const base = 0.5 * height;
+  const triangleBase = from.add(
+    vec.normalize().scale(vec.magnitude() - height),
+  );
+  const triangleTopCorner = triangleBase.add(
+    vec
+      .rotate(Math.PI / 2)
+      .normalize()
+      .scale(base),
+  );
+  const triangleBottomCorner = triangleBase.add(
+    vec
+      .rotate((3 * Math.PI) / 2)
+      .normalize()
+      .scale(base),
+  );
+  const triangleTip = from.add(vec);
+  ctx.fillStyle = color.VECTOR_HEAD_COLOR;
   ctx.beginPath();
-  for (let i = 0; i <= 1; i += precisions.phasor_circle_precision) {
-    ctx.strokeStyle = "gray";
-    const pos = phasor.getValueAt(i).toVector().add(source);
-    let x = pos.x;
-    let y = pos.y;
-    if (i == 0) ctx.moveTo(x, y);
-    ctx.lineTo(x, y);
+  ctx.moveTo(triangleBase.x, triangleBase.y);
+  ctx.lineTo(triangleTopCorner.x, triangleTopCorner.y);
+  ctx.lineTo(triangleTip.x, triangleTip.y);
+  ctx.lineTo(triangleBottomCorner.x, triangleBottomCorner.y);
+  ctx.lineTo(triangleBase.x, triangleBase.y);
+  ctx.fill();
+}
+
+function syncAnimationProgress() {
+  state.pointTrace = [];
+  for (
+    let i = 0;
+    i <= state.animationProgress;
+    i += state.animationSpeed / 10
+  ) {
+    let res = Vector.zero();
+    for (let phasor of func!.phasors)
+      res = res.add(phasor.getValueAt(i).toVector());
+    state.pointTrace.push([res.x, res.y]);
   }
-  ctx.stroke();
 }
