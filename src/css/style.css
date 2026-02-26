@@ -562,6 +562,7 @@ input[type="range"] {
   }
 }
 
-#music-toggle {
+#music-toggle,
+#play-toggle {
   width: 100px; /* prevents layout changes when text changes from mute <=> unmute */
 }
