@@ -1,5 +1,5 @@
 import { initAudio } from "./audio/audio_manager";
-import { savePremadeDrawings } from "./utils/drawing-utils";
+import { savePremadeDrawings } from "./drawing/drawing_utils";
 import { ViewManager } from "./views/view_manager";
 
 export const viewManager = new ViewManager();
