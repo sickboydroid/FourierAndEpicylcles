@@ -1,15 +1,15 @@
 import {
   initView as initDrawingView,
   destroyView as destroyDrawingView,
-} from "./drawing";
+} from "./view_drawing";
 import {
   destroyView as destroySelectDrawingView,
   initView as initSelectDrawingView,
-} from "./selectDrawing";
+} from "./view_select_drawing";
 import {
   destroyView as destroySimulateView,
   initView as initSimulateView,
-} from "./simulate";
+} from "./view_simulate";
 
 const SELECT_DRAWING_VIEW = ".select-drawing";
 const DRAWING_VIEW = ".drawing";

@@ -1,9 +1,9 @@
-import { getSavedDrawings, saveDrawing, toSimplePoints } from "./drawing-utils";
-import ComplexFunction from "./function";
-import { viewManager } from "./main";
-import { Point } from "./point";
-import { color, simulateState, drawingState as state } from "./state";
-import Vector from "./vector";
+import { viewManager } from "../main";
+import ComplexFunction from "../math/function";
+import { Point } from "../math/point";
+import Vector from "../math/vector";
+import { saveDrawing, toSimplePoints } from "../utils/drawing-utils";
+import { color, simulateState, drawingState as state } from "../utils/state";
 
 const root = document.querySelector("div.view.drawing") as HTMLDivElement;
 export const canvas = root.querySelector(
@@ -52,23 +52,23 @@ function initInputHanldersForButtons() {
     "dialog#save-dialog",
   ) as HTMLDialogElement;
 
-  btnAdd.addEventListener("click", (event) => {
+  btnAdd.addEventListener("click", () => {
     btnDelete.classList.remove("selected");
     btnAdd.classList.add("selected");
     mode = "add";
   });
 
-  btnDelete.addEventListener("click", (event) => {
+  btnDelete.addEventListener("click", () => {
     btnAdd.classList.remove("selected");
     btnDelete.classList.add("selected");
     mode = "delete";
   });
 
-  btnSave.addEventListener("click", (event) => {
+  btnSave.addEventListener("click", () => {
     dialogSave.showModal();
   });
 
-  btnClose.addEventListener("click", (event) => {
+  btnClose.addEventListener("click", () => {
     viewManager.hideDrawing();
   });
 
@@ -303,7 +303,6 @@ function clearCanvas() {
 
 function draw(curTime: number) {
   clearCanvas();
-  const deltaTime = Math.min(curTime - state.lastTime, 50) / 1000;
   state.lastTime = curTime;
   drawGrid();
   drawBezier();
