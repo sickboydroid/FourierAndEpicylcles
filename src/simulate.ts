@@ -3,6 +3,7 @@ import Complex from "./complex";
 import ComplexFunction from "./function";
 import { Phasor } from "./phasor";
 import Vector from "./vector";
+import { musicalNote } from "./premade-drawings";
 
 const root = document.querySelector("div.view.simulate") as HTMLDivElement;
 const canvas = root.querySelector("#simulate-canvas") as HTMLCanvasElement;
@@ -121,18 +122,7 @@ function initFunction() {
 }
 
 function getDefaultFunction() {
-  // state.function = ComplexFunction.fromBezierCurvePoints(heart);
-  if (state.function) return state.function;
-  console.info("Create empty function as no function is provided");
-  const func = new ComplexFunction();
-  const scale = 200;
-  const getMapping = (at: number) =>
-    Complex.fromCartesian(at, Math.sin(3 * Math.PI * at * at)).scale(scale);
-  for (let i = 0; i <= 1; i += 0.0001) {
-    func.addMapping(i, getMapping(i));
-  }
-  func.addMapping(1, getMapping(0));
-  return func;
+  return (state.function = ComplexFunction.fromBezierCurvePoints(musicalNote));
 }
 
 function updateProgress(progress: number) {
