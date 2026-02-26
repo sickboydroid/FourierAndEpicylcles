@@ -24,7 +24,10 @@
           <form method="dialog" class="modal-content glass-panel">
             <h2>Save Drawing</h2>
             <div class="field">
-              <p>Note: The curve will be closed automatically</p>
+              <p>
+                Note: Try closing loop and placing starting and ending part at
+                origin to prevent "Gibbs Phenomenon"
+              </p>
             </div>
             <div class="field">
               <label for="drawing-name">Name</label>
@@ -78,7 +81,7 @@
           <div class="action-buttons">
             <button id="play-toggle" class="btn primary">Pause</button>
             <button id="music-toggle" class="btn primary">Mute</button>
-            <button id="load-new-path" class="btn primary">
+            <button id="change-function" class="btn primary">
               Change Function
             </button>
           </div>
