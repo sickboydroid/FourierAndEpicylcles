@@ -1,4 +1,4 @@
-import { heart, musicalNote } from "../drawing/premade_drawings";
+import { musicalNote } from "../drawing/premade_drawings";
 import ComplexFunction from "../math/complex_function";
 import type { Phasor } from "../math/phasor";
 import Vector from "../math/vector";
