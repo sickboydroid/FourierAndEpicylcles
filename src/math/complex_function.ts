@@ -1,7 +1,7 @@
-import Complex from "./complex";
+import { lowerBound, vectorLerp2 as lerp } from "../utils/utils";
+import { precisions } from "../utils/state";
+import Complex from "./complex_number";
 import { Phasor } from "./phasor";
-import { precisions } from "./state";
-import { lowerBound, vectorLerp2 as lerp } from "./utils";
 
 export default class ComplexFunction {
   input: number[];

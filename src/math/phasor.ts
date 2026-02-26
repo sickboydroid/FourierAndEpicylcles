@@ -1,4 +1,4 @@
-import Complex from "./complex";
+import Complex from "./complex_number";
 
 export class Phasor {
   amplitude: number;
