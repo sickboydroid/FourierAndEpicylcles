@@ -14,7 +14,7 @@ export type Drawing = {
 };
 
 export function savePremadeDrawings() {
-  // if (localStorage.getItem(KEY_HAS_SAVED_PREMADE_DRAWINGS)) return;
+  if (localStorage.getItem(KEY_HAS_SAVED_PREMADE_DRAWINGS)) return;
   for (const premadeDrawing of premadeDrawings)
     saveDrawing(premadeDrawing.name, toBezierPoints(premadeDrawing.points));
   localStorage.setItem(KEY_HAS_SAVED_PREMADE_DRAWINGS, "true");
