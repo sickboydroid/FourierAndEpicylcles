@@ -1,5 +1,5 @@
-import ComplexFunction from "./function";
-import type { Point } from "./point";
+import { BezierCurve } from "../drawing/bezier_curve";
+import type ComplexFunction from "../math/complex_function";
 
 export const precisions = {
   integration_precision: 0.0005,
@@ -14,12 +14,7 @@ export const selectDrawingState = {
 
 export const drawingState = {
   lastTime: 0,
-  /**
-   * [p1, c1, p2, c2, c2.5, p3, c3 ..., pn, cn]
-   * px = is a point, cx is control point of px for prev curve and cx.5 is
-   * control point of px for next curve
-   */
-  points: [] as Point[],
+  curve: new BezierCurve(),
   hasInitializedHanlers: false,
 };
 

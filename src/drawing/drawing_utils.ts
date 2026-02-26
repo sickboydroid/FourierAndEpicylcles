@@ -1,7 +1,5 @@
-import { Point } from "./point";
-import { premadeDrawings } from "./premade-drawings";
-import { WORLD_WIDTH, WORLD_HEIGHT } from "./simulate";
-import Vector from "./vector";
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../views/view_drawing";
+import { premadeDrawings } from "./premade_drawings";
 
 const KEY_HAS_SAVED_PREMADE_DRAWINGS = "has_saved_premade_drawings";
 
@@ -15,34 +13,10 @@ export type Drawing = {
 
 export function savePremadeDrawings() {
   if (localStorage.getItem(KEY_HAS_SAVED_PREMADE_DRAWINGS)) return;
-  for (const premadeDrawing of premadeDrawings)
-    saveDrawing(premadeDrawing.name, toBezierPoints(premadeDrawing.points));
+  for (const premadeDrawing of premadeDrawings) {
+    saveDrawing(premadeDrawing.name, premadeDrawing.points);
+  }
   localStorage.setItem(KEY_HAS_SAVED_PREMADE_DRAWINGS, "true");
-}
-
-/**
- * Converts the points used in drawing to a more simple format
- **/
-export function toSimplePoints(points: Point[]): [number, number][] {
-  const res: [number, number][] = [];
-  for (const point of points) {
-    res.push([point.pos.x, point.pos.y]);
-  }
-  return res;
-}
-export function toBezierPoints(points: [number, number][]): Point[] {
-  const parsedPoints: Point[] = [];
-  for (const point of points) {
-    parsedPoints.push(new Point(new Vector(point[0], point[1])));
-  }
-
-  if (parsedPoints.length >= 2) parsedPoints[1].is_constrol_point = true;
-  for (let i = 3; i < parsedPoints.length; i += 3) {
-    parsedPoints[i].is_constrol_point = true;
-    if (i + 1 < parsedPoints.length)
-      parsedPoints[i + 1].is_constrol_point = true;
-  }
-  return parsedPoints;
 }
 
 export function getSavedDrawings() {
@@ -55,15 +29,14 @@ export function getSavedDrawings() {
   return res;
 }
 
-export function saveDrawing(name: string, points: Point[]) {
-  const parsedPoints = toSimplePoints(points);
+export function saveDrawing(name: string, points: [number, number][]) {
   const key = generateDrawingKey();
   const keys = getSavedDrawingKeys();
   const drawing: Drawing = {
     width: WORLD_WIDTH,
     height: WORLD_HEIGHT,
     name,
-    points: parsedPoints,
+    points,
     key,
   };
   keys.push(key);

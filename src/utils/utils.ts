@@ -1,5 +1,5 @@
-import type Complex from "./complex";
-import Vector from "./vector";
+import type Complex from "../math/complex_number";
+import Vector from "../math/vector";
 
 export function randomBrightColor(): string {
   return `hsl(${Math.random() * 360}, ${80}%, ${70}%)`;

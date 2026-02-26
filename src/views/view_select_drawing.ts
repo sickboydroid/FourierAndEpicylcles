@@ -1,16 +1,15 @@
 import {
-  deleteDrawing,
   getSavedDrawings,
-  toBezierPoints,
   type Drawing,
-} from "./drawing-utils";
-import ComplexFunction from "./function";
-import { viewManager } from "./main";
+  deleteDrawing,
+} from "../drawing/drawing_utils";
+import { viewManager } from "../main";
+import ComplexFunction from "../math/complex_function";
 import {
   drawingState,
   selectDrawingState as state,
   simulateState,
-} from "./state";
+} from "../utils/state";
 
 const root = document.querySelector(
   "div.view.select-drawing",
@@ -32,7 +31,7 @@ function initInputHandlers() {
   const btnClose = root.querySelector(
     ".select-drawing .floating-controls button.close",
   ) as HTMLButtonElement;
-  btnClose.addEventListener("click", (event) => {
+  btnClose.addEventListener("click", () => {
     viewManager.hideSelectDrawing();
   });
 }
@@ -40,7 +39,7 @@ function initInputHandlers() {
 function initDrawingItems() {
   const createItem = addItem(0, "+", "Create New", null);
   createItem.addEventListener("click", () => {
-    drawingState.points = [];
+    drawingState.curve.clear();
     viewManager.showDrawing();
     viewManager.hideSelectDrawing();
   });
@@ -113,7 +112,8 @@ function addItem(
 
   editBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    drawingState.points = toBezierPoints(drawing!.points);
+    drawingState.curve.clear();
+    drawingState.curve.loadFromSimpleArray(drawing!.points);
     viewManager.showDrawing();
     viewManager.hideSelectDrawing();
   });

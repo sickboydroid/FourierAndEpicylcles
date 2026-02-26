@@ -1,16 +1,14 @@
-import { color, precisions, simulateState as state } from "./state";
-import Complex from "./complex";
-import ComplexFunction from "./function";
-import { Phasor } from "./phasor";
-import Vector from "./vector";
-import { musicalNote } from "./premade-drawings";
+import { heart, musicalNote } from "../drawing/premade_drawings";
+import ComplexFunction from "../math/complex_function";
+import type { Phasor } from "../math/phasor";
+import Vector from "../math/vector";
+import { color, precisions, simulateState as state } from "../utils/state";
 
 const root = document.querySelector("div.view.simulate") as HTMLDivElement;
 const canvas = root.querySelector("#simulate-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 export let WORLD_WIDTH = window.innerWidth;
 export let WORLD_HEIGHT = window.innerHeight;
-const MAX_TRACE_POINTS = 10000;
 const progressRange = root.querySelector("#progress") as HTMLInputElement;
 const progressLabel = root.querySelector("#progress-label") as HTMLLabelElement;
 
@@ -20,7 +18,6 @@ const frameRateInfo = {
   lastFrameRate: 60,
 };
 
-let func = getDefaultFunction();
 /******************Initializers**********************/
 
 export function initView() {
@@ -28,7 +25,6 @@ export function initView() {
   state.pointTrace = [];
   state.animationProgress = 0;
   state.lastTime = 0;
-  func = getDefaultFunction();
 
   initCanvas();
   initInputHandlers();
@@ -57,22 +53,22 @@ function initInputHandlers() {
   const inputShowFunction = root.querySelector(
     "#show-function",
   ) as HTMLInputElement;
-  inputVectorCount.addEventListener("change", (event) => {
+  inputVectorCount.addEventListener("change", () => {
     let count = Number(inputVectorCount.value);
     count = Math.min(count, 500);
     state.vectorCount = count;
     inputVectorCount.value = count.toString();
     initFunction();
   });
-  inputShowFunction.addEventListener("change", (event) => {
+  inputShowFunction.addEventListener("change", () => {
     state.showFunction = inputShowFunction.checked;
   });
-  btnPlayToggle.addEventListener("click", (event) => {
+  btnPlayToggle.addEventListener("click", () => {
     state.isProgressing = !state.isProgressing;
     if (state.isProgressing) btnPlayToggle.textContent = "Pause";
     else btnPlayToggle.textContent = "Play";
   });
-  progressRange.addEventListener("input", (event) => {
+  progressRange.addEventListener("input", () => {
     progressLabel.textContent =
       (Number(progressRange.value) * 100).toFixed(1) + "%";
     state.animationProgress = Number(progressRange.value);
@@ -80,10 +76,10 @@ function initInputHandlers() {
     btnPlayToggle.textContent = "Play";
     syncAnimationProgress();
   });
-  inputShowCircles.addEventListener("change", (event) => {
+  inputShowCircles.addEventListener("change", () => {
     state.showCircles = inputShowCircles.checked;
   });
-  inputShowVectors.addEventListener("change", (event) => {
+  inputShowVectors.addEventListener("change", () => {
     state.showVectors = inputShowVectors.checked;
   });
 }
@@ -116,13 +112,11 @@ function initCanvas() {
 }
 
 function initFunction() {
+  if (!state.function)
+    state.function = ComplexFunction.fromBezierCurvePoints(musicalNote);
   const min = Math.floor(state.vectorCount / 2);
   const max = state.vectorCount - min;
-  func!.computePhasors(-min, max);
-}
-
-function getDefaultFunction() {
-  return (state.function = ComplexFunction.fromBezierCurvePoints(musicalNote));
+  state.function.computePhasors(-min, max);
 }
 
 function updateProgress(progress: number) {
@@ -184,7 +178,7 @@ function drawGrid() {
 
 function drawPhasors() {
   let res = Vector.zero();
-  for (let phasor of func!.phasors) {
+  for (let phasor of state.function!.phasors) {
     drawPhasor(phasor, res);
     res = res.add(phasor.getValueAt(state.animationProgress).toVector());
   }
@@ -218,8 +212,8 @@ function drawFunction() {
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i <= 1; i += precisions.function_drawing_precision) {
-    let x = func.getValueAt(i).getReal();
-    let y = func.getValueAt(i).getImag();
+    let x = state.function!.getValueAt(i).getReal();
+    let y = state.function!.getValueAt(i).getImag();
     if (i == 0) ctx.moveTo(x, y);
     ctx.lineTo(x, y);
   }
@@ -298,7 +292,7 @@ function syncAnimationProgress() {
     i += state.animationSpeed / 10
   ) {
     let res = Vector.zero();
-    for (let phasor of func!.phasors)
+    for (let phasor of state.function!.phasors)
       res = res.add(phasor.getValueAt(i).toVector());
     state.pointTrace.push([res.x, res.y]);
   }
