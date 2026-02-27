@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   base: "/FourierAndEpicylcles/",
+  rootDir: ".",
   server: {
     port: 5173,
     open: true,
@@ -10,7 +11,6 @@ export default defineConfig({
   build: {
     target: "esnext",
     outDir: "dist",
-    rootDir: ".",
     sourcemap: false,
     emptyOutDir: true,
   },
