@@ -219,7 +219,6 @@ function drawFunction() {
   }
   ctx.stroke();
 }
-
 function drawPhasor(phasor: Phasor, source: Vector) {
   if (state.showVectors) {
     // draw the line
@@ -230,17 +229,13 @@ function drawPhasor(phasor: Phasor, source: Vector) {
   }
 
   if (state.showCircles) {
-    // draw the circle
+    const radius = phasor.getValueAt(0).toVector().magnitude();
+    
+    ctx.strokeStyle = color.CIRCLE_COLOR;
+    ctx.lineWidth = 1;
+    
     ctx.beginPath();
-    for (let i = 0; i <= 1; i += precisions.phasor_circle_precision) {
-      ctx.strokeStyle = color.CIRCLE_COLOR;
-      ctx.lineWidth = 1;
-      const pos = phasor.getValueAt(i).toVector().add(source);
-      let x = pos.x;
-      let y = pos.y;
-      if (i == 0) ctx.moveTo(x, y);
-      ctx.lineTo(x, y);
-    }
+    ctx.arc(source.x, source.y, radius, 0, 2 * Math.PI);
     ctx.stroke();
   }
 }

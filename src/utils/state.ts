@@ -3,9 +3,8 @@ import type ComplexFunction from "../math/complex_function";
 
 export const precisions = {
   integration_precision: 0.0005,
-  phasor_circle_precision: 0.001,
-  curve_sampling_precision: 0.0001,
-  function_drawing_precision: 0.0001,
+  curve_sampling_precision: 0.0005,
+  function_drawing_precision: 0.001,
 };
 
 export const selectDrawingState = {
