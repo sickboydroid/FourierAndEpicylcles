@@ -1,7 +1,6 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../views/view_drawing";
 import { premadeDrawings } from "./premade_drawings";
 
-const KEY_HAS_SAVED_PREMADE_DRAWINGS = "has_saved_premade_drawings";
 
 export type Drawing = {
   width: number;
@@ -12,6 +11,7 @@ export type Drawing = {
 };
 
 export function savePremadeDrawings() {
+  const KEY_HAS_SAVED_PREMADE_DRAWINGS = "has_saved_premade_drawings";
   if (localStorage.getItem(KEY_HAS_SAVED_PREMADE_DRAWINGS)) return;
   for (const premadeDrawing of premadeDrawings) {
     saveDrawing(premadeDrawing.name, premadeDrawing.points);
