@@ -101,7 +101,7 @@ function addItem(
     return btn;
   };
 
-  const deleteBtn = makeIconBtn("/delete.svg", "delete");
+  const deleteBtn = makeIconBtn("delete.svg", "delete");
   const editBtn = makeIconBtn("edit.svg", "edit");
 
   deleteBtn.addEventListener("click", (e) => {
